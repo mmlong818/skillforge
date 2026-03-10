@@ -6,6 +6,12 @@
 
 ---
 
+<p align="center">
+  <img src="https://files.manuscdn.com/user_upload_by_module/session_file/309866237129684078/GLnMzhHYFmrcXYPw.png" alt="SkillForge Screenshot" width="700">
+</p>
+
+---
+
 ## 这是什么
 
 SkillForge 是一套经过实战验证的 **Agent Skills 生成方法论**，基于对 Anthropic 官方 Skills 仓库（88.1k Stars）、100+ 社区优秀 Skills、Agent Skills 开放标准规范的深度分析提炼而成。
