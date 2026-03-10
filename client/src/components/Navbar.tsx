@@ -10,12 +10,12 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
-      <div className="container flex h-14 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 font-semibold text-lg tracking-tight">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Sparkles className="h-4 w-4" />
+      <div className="container flex h-11 items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 font-semibold text-sm tracking-tight">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Sparkles className="h-3.5 w-3.5" />
           </div>
-          <span>Skill Generator</span>
+          <span className="text-sm">Skill Generator</span>
         </Link>
 
         <nav className="flex items-center gap-1">

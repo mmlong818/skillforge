@@ -17,10 +17,10 @@ const STEP_LABELS = [
 ];
 
 function StepIcon({ status }: { status: string }) {
-  if (status === "completed") return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
-  if (status === "running") return <Loader2 className="h-5 w-5 text-primary animate-spin" />;
-  if (status === "failed") return <XCircle className="h-5 w-5 text-destructive" />;
-  return <Circle className="h-5 w-5 text-muted-foreground/40" />;
+  if (status === "completed") return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
+  if (status === "running") return <Loader2 className="h-4 w-4 text-primary animate-spin" />;
+  if (status === "failed") return <XCircle className="h-4 w-4 text-destructive" />;
+  return <Circle className="h-4 w-4 text-muted-foreground/40" />;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -31,7 +31,7 @@ function CopyButton({ text }: { text: string }) {
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <Button variant="ghost" size="sm" onClick={handleCopy} className="h-7 gap-1 text-xs">
+    <Button variant="ghost" size="sm" onClick={handleCopy} className="h-6 gap-1 text-[11px] px-1.5">
       {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
       {copied ? "已复制" : "复制"}
     </Button>
@@ -40,27 +40,25 @@ function CopyButton({ text }: { text: string }) {
 
 function FilePreview({ file }: { file: { path: string; content: string } }) {
   const [expanded, setExpanded] = useState(false);
-  const ext = file.path.split(".").pop() || "";
-  const lang = ext === "md" ? "markdown" : ext === "py" ? "python" : ext === "ts" ? "typescript" : ext;
 
   return (
-    <div className="border border-border/60 rounded-lg overflow-hidden">
+    <div className="border border-border/60 rounded-md overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/30 hover:bg-muted/50 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 bg-muted/30 hover:bg-muted/50 transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <FileCode className="h-4 w-4 text-primary" />
-          <span className="font-mono text-sm font-medium">{file.path}</span>
+        <div className="flex items-center gap-1.5">
+          <FileCode className="h-3.5 w-3.5 text-primary" />
+          <span className="font-mono text-xs font-medium">{file.path}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <CopyButton text={file.content} />
-          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         </div>
       </button>
       {expanded && (
-        <div className="max-h-96 overflow-auto bg-muted/10">
-          <pre className="p-4 text-sm font-mono leading-relaxed whitespace-pre-wrap break-words">
+        <div className="max-h-80 overflow-auto bg-muted/10">
+          <pre className="p-3 text-xs font-mono leading-relaxed whitespace-pre-wrap break-words">
             <code>{file.content}</code>
           </pre>
         </div>
@@ -88,7 +86,6 @@ export default function Generate() {
 
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
-  // Auto-expand the currently running step
   useEffect(() => {
     if (gen?.steps) {
       const running = gen.steps.find((s) => s.status === "running");
@@ -107,7 +104,6 @@ export default function Generate() {
 
   const handleDownloadZip = async () => {
     if (!resultFiles.length) return;
-    // Dynamic import JSZip
     const JSZip = (await import("jszip")).default;
     const zip = new JSZip();
     const folderName = gen?.skillName || "skill";
@@ -130,7 +126,7 @@ export default function Generate() {
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
         <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -140,10 +136,10 @@ export default function Generate() {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Navbar />
-        <div className="flex-1 flex items-center justify-center flex-col gap-4">
-          <p className="text-muted-foreground">未找到该生成记录</p>
-          <Button variant="outline" onClick={() => navigate("/")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
+        <div className="flex-1 flex items-center justify-center flex-col gap-3">
+          <p className="text-sm text-muted-foreground">未找到该生成记录</p>
+          <Button variant="outline" size="sm" onClick={() => navigate("/")}>
+            <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
             返回首页
           </Button>
         </div>
@@ -155,46 +151,45 @@ export default function Generate() {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
 
-      <div className="container py-6 flex-1">
-        <div className="mb-6 flex items-center justify-between">
+      <div className="container py-4 flex-1">
+        <div className="mb-4 flex items-center justify-between">
           <div>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="mb-2 -ml-2 gap-1">
-              <ArrowLeft className="h-4 w-4" /> 返回
+            <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="mb-1 -ml-2 gap-1 h-7 text-xs">
+              <ArrowLeft className="h-3.5 w-3.5" /> 返回
             </Button>
-            <h1 className="text-2xl font-bold">{gen.skillName}</h1>
-            <p className="text-sm text-muted-foreground">{gen.domain}</p>
+            <h1 className="text-xl font-bold">{gen.skillName}</h1>
+            <p className="text-xs text-muted-foreground">{gen.domain}</p>
           </div>
           {gen.status === "completed" && resultFiles.length > 0 && (
-            <Button onClick={handleDownloadZip} className="gap-2">
-              <Download className="h-4 w-4" />
+            <Button size="sm" onClick={handleDownloadZip} className="gap-1.5">
+              <Download className="h-3.5 w-3.5" />
               下载 ZIP
             </Button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left: Progress Timeline */}
           <div className="lg:col-span-1">
             <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center justify-between">
+              <CardHeader className="pb-2 pt-3 px-3">
+                <CardTitle className="text-sm flex items-center justify-between">
                   生成进度
-                  <span className="text-sm font-normal text-muted-foreground">{progress}%</span>
+                  <span className="text-xs font-normal text-muted-foreground">{progress}%</span>
                 </CardTitle>
-                {/* Progress bar */}
-                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                   <div
                     className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
               </CardHeader>
-              <CardContent className="space-y-1">
+              <CardContent className="space-y-0.5 px-3 pb-3">
                 {gen.steps?.map((step) => (
                   <button
                     key={step.stepNumber}
                     onClick={() => setExpandedStep(expandedStep === step.stepNumber ? null : step.stepNumber)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                    className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors ${
                       expandedStep === step.stepNumber
                         ? "bg-primary/10 text-primary"
                         : "hover:bg-muted/50"
@@ -202,11 +197,11 @@ export default function Generate() {
                   >
                     <StepIcon status={step.status} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        Step {step.stepNumber}: {STEP_LABELS[step.stepNumber]}
+                      <p className="text-xs font-medium truncate">
+                        {step.stepNumber}. {STEP_LABELS[step.stepNumber]}
                       </p>
                       {step.summary && (
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        <p className="text-[11px] text-muted-foreground truncate">
                           {step.summary}
                         </p>
                       )}
@@ -215,9 +210,9 @@ export default function Generate() {
                 ))}
 
                 {gen.status === "failed" && gen.errorMessage && (
-                  <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <p className="text-sm text-destructive font-medium">生成失败</p>
-                    <p className="text-xs text-destructive/80 mt-1">{gen.errorMessage}</p>
+                  <div className="mt-2 p-2 rounded-md bg-destructive/10 border border-destructive/20">
+                    <p className="text-xs text-destructive font-medium">生成失败</p>
+                    <p className="text-[11px] text-destructive/80 mt-0.5">{gen.errorMessage}</p>
                   </div>
                 )}
               </CardContent>
@@ -225,39 +220,38 @@ export default function Generate() {
           </div>
 
           {/* Right: Step Output / Result Preview */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Step detail view */}
+          <div className="lg:col-span-2 space-y-4">
             {expandedStep && gen.steps && (
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm">
                     Step {expandedStep}: {STEP_LABELS[expandedStep]}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="px-4 pb-4">
                   {(() => {
                     const step = gen.steps?.find((s) => s.stepNumber === expandedStep);
                     if (!step) return null;
                     if (step.status === "pending") {
-                      return <p className="text-sm text-muted-foreground">等待执行...</p>;
+                      return <p className="text-xs text-muted-foreground">等待执行...</p>;
                     }
                     if (step.status === "running") {
                       return (
-                        <div className="flex items-center gap-3 py-8 justify-center">
-                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                          <span className="text-sm text-muted-foreground">AI 正在思考中...</span>
+                        <div className="flex items-center gap-2 py-6 justify-center">
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                          <span className="text-xs text-muted-foreground">AI 正在思考中...</span>
                         </div>
                       );
                     }
                     if (step.status === "failed") {
                       return (
-                        <div className="p-4 rounded-lg bg-destructive/10">
-                          <p className="text-sm text-destructive">{step.errorMessage || "执行失败"}</p>
+                        <div className="p-3 rounded-md bg-destructive/10">
+                          <p className="text-xs text-destructive">{step.errorMessage || "执行失败"}</p>
                         </div>
                       );
                     }
                     return (
-                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <div className="prose prose-sm max-w-none dark:prose-invert text-sm">
                         <Streamdown>{step.output || ""}</Streamdown>
                       </div>
                     );
@@ -266,34 +260,30 @@ export default function Generate() {
               </Card>
             )}
 
-            {/* Final result */}
             {gen.status === "completed" && resultFiles.length > 0 && (
               <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <FolderTree className="h-4 w-4 text-primary" />
+                <CardHeader className="pb-2 pt-3 px-4">
+                  <CardTitle className="text-sm flex items-center gap-1.5">
+                    <FolderTree className="h-3.5 w-3.5 text-primary" />
                     生成结果 ({resultFiles.length} 个文件)
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* Directory tree */}
+                <CardContent className="space-y-2 px-4 pb-4">
                   {(gen.result as any)?.directory_tree && (
-                    <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
-                      <pre className="text-xs font-mono whitespace-pre text-muted-foreground">
+                    <div className="p-2 rounded-md bg-muted/30 border border-border/50">
+                      <pre className="text-[11px] font-mono whitespace-pre text-muted-foreground">
                         {(gen.result as any).directory_tree}
                       </pre>
                     </div>
                   )}
-                  {/* File list */}
                   {resultFiles.map((file: any) => (
                     <FilePreview key={file.path} file={file} />
                   ))}
 
-                  {/* Usage info */}
                   {(gen.result as any)?.usage && (
-                    <div className="mt-4 p-4 rounded-lg bg-primary/5 border border-primary/10">
-                      <h4 className="font-semibold text-sm mb-2">使用说明</h4>
-                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <div className="mt-3 p-3 rounded-md bg-primary/5 border border-primary/10">
+                      <h4 className="font-semibold text-xs mb-1.5">使用说明</h4>
+                      <div className="prose prose-sm max-w-none dark:prose-invert text-xs">
                         <Streamdown>{
                           typeof (gen.result as any).usage === "string"
                             ? (gen.result as any).usage
@@ -306,12 +296,11 @@ export default function Generate() {
               </Card>
             )}
 
-            {/* Empty state when no step selected and not completed */}
             {!expandedStep && gen.status !== "completed" && (
               <Card>
-                <CardContent className="py-12 text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-                  <p className="text-muted-foreground">点击左侧步骤查看详细输出</p>
+                <CardContent className="py-8 text-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-3" />
+                  <p className="text-xs text-muted-foreground">点击左侧步骤查看详细输出</p>
                 </CardContent>
               </Card>
             )}
