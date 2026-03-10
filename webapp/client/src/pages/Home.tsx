@@ -1,0 +1,191 @@
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import Navbar from "@/components/Navbar";
+import { trpc } from "@/lib/trpc";
+import { getLoginUrl } from "@/const";
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { Sparkles, Zap, FileCode, Download, Shield, ArrowRight, Loader2 } from "lucide-react";
+
+const FEATURES = [
+  { icon: Zap, title: "7 步自动生成", desc: "需求分析到交付，全流程自动化" },
+  { icon: FileCode, title: "完整 Skill 包", desc: "SKILL.md + scripts/ + references/" },
+  { icon: Shield, title: "质量审计内置", desc: "10 维度评分 + 自动修复" },
+  { icon: Download, title: "一键下载", desc: "ZIP 打包，即装即用" },
+];
+
+export default function Home() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const [, navigate] = useLocation();
+  const [skillName, setSkillName] = useState("");
+  const [domain, setDomain] = useState("");
+  const [features, setFeatures] = useState("");
+  const [scenarios, setScenarios] = useState("");
+  const [extraNotes, setExtraNotes] = useState("");
+
+  const generateMutation = trpc.skill.generate.useMutation({
+    onSuccess: (data) => {
+      navigate(`/generate/${data.id}`);
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!skillName.trim() || !domain.trim() || !features.trim()) return;
+    generateMutation.mutate({
+      skillName: skillName.trim(),
+      domain: domain.trim(),
+      features: features.trim(),
+      scenarios: scenarios.trim() || undefined,
+      extraNotes: extraNotes.trim() || undefined,
+    });
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar />
+
+      {/* Hero + Features combined */}
+      <section className="relative overflow-hidden border-b border-border/40">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/3" />
+        <div className="container relative py-8 md:py-12">
+          <div className="mx-auto max-w-3xl text-center mb-6">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+              <Sparkles className="h-3 w-3" />
+              基于 100+ 优秀 Skills 深度分析
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+              Perfect Skill
+              <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"> Generator</span>
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
+              输入需求，AI 自动执行 7 步流程，生成符合最佳实践的生产级 Agent Skill 包
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="flex flex-col items-center text-center p-3 rounded-lg border border-border/40 bg-card/80 backdrop-blur-sm">
+                <div className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
+                  <f.icon className="h-4 w-4" />
+                </div>
+                <h3 className="font-semibold text-xs">{f.title}</h3>
+                <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Main Form */}
+      <section className="container py-6 pb-12">
+        <Card className="mx-auto max-w-2xl shadow-md border-border/60">
+          <CardHeader className="text-center pb-1 pt-5 px-5">
+            <CardTitle className="text-xl">创建新 Skill</CardTitle>
+            <CardDescription className="text-xs">
+              描述你想创建的 Agent Skill，系统将自动完成全部 7 个步骤
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-5 pb-5">
+            {!isAuthenticated && !authLoading ? (
+              <div className="text-center py-6">
+                <p className="text-muted-foreground mb-3 text-sm">请先登录后再创建 Skill</p>
+                <Button asChild>
+                  <a href={getLoginUrl()}>登录开始使用</a>
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="skillName" className="text-xs">技能名称 *</Label>
+                    <Input
+                      id="skillName"
+                      placeholder="例如：code-reviewer"
+                      value={skillName}
+                      onChange={(e) => setSkillName(e.target.value)}
+                      className="h-9 text-sm"
+                      required
+                    />
+                    <p className="text-[11px] text-muted-foreground">hyphen-case 格式</p>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="domain" className="text-xs">目标领域 *</Label>
+                    <Input
+                      id="domain"
+                      placeholder="例如：代码质量与审查"
+                      value={domain}
+                      onChange={(e) => setDomain(e.target.value)}
+                      className="h-9 text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="features" className="text-xs">核心功能 *</Label>
+                  <Textarea
+                    id="features"
+                    placeholder="描述核心功能，例如：&#10;- 自动审查代码质量&#10;- 检测安全漏洞&#10;- 提供重构建议"
+                    value={features}
+                    onChange={(e) => setFeatures(e.target.value)}
+                    rows={3}
+                    className="text-sm resize-none"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="scenarios" className="text-xs">使用场景（可选）</Label>
+                    <Textarea
+                      id="scenarios"
+                      placeholder="描述典型使用场景"
+                      value={scenarios}
+                      onChange={(e) => setScenarios(e.target.value)}
+                      rows={2}
+                      className="text-sm resize-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="extraNotes" className="text-xs">补充说明（可选）</Label>
+                    <Textarea
+                      id="extraNotes"
+                      placeholder="技术栈偏好、平台要求等"
+                      value={extraNotes}
+                      onChange={(e) => setExtraNotes(e.target.value)}
+                      rows={2}
+                      className="text-sm resize-none"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full gap-2"
+                  disabled={generateMutation.isPending || !skillName.trim() || !domain.trim() || !features.trim()}
+                >
+                  {generateMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      正在创建...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      开始生成 Skill
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+    </div>
+  );
+}

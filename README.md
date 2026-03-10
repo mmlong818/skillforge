@@ -17,6 +17,7 @@ SkillForge 是一套经过实战验证的 **Agent Skills 生成方法论**，基
 | 目录 | 内容 | 说明 |
 |------|------|------|
 | `generator/` | Perfect Skill Generator v2.0 | 7 步结构化提示词系统，引导 AI 从零生成 Skill |
+| `webapp/` | SkillForge Web App | 完整的 Web 应用源码，将 7 步流程自动化为一键生成 |
 | `skills/` | Skills 集合 | 使用 SkillForge 生成的高质量 Skill（持续添加中） |
 | `docs/` | 研究报告 | 支撑方法论的分析报告和审查记录 |
 
@@ -40,9 +41,11 @@ SkillForge 是一套经过实战验证的 **Agent Skills 生成方法论**，基
 | Step 6 | 配套资源生成 | 生成 scripts/、references/、templates/ 等配套文件 |
 | Step 7 | 最终组装与交付 | 格式验证 + 内容验证 + 最佳实践验证 |
 
-### 方式二：使用 Web 应用自动生成
+### 方式二：自部署 Web 应用
 
-SkillForge 同时提供了一个 Web 应用版本，将 7 步流程自动化为一键生成。访问 [SkillForge Web](https://skillgenweb-7xmj2hw5.manus.space) 即可体验。
+SkillForge 同时提供了完整的 Web 应用源码（`webapp/` 目录），你可以自行部署运行。详见 [webapp/README.md](webapp/README.md)。
+
+技术栈：React 19 + Express 4 + tRPC 11 + MySQL，支持任意 OpenAI-compatible LLM API。
 
 ### 使用已有 Skill
 
@@ -85,6 +88,13 @@ skillforge/
 ├── README.md                        # 本文件
 ├── LICENSE                          # CC BY-NC-SA 4.0 许可证
 ├── CONTRIBUTING.md                  # 贡献指南与质量标准
+├── webapp/                          # SkillForge Web App 完整源码
+│   ├── README.md                    # Web App 部署指南
+│   ├── .env.example                 # 环境变量模板
+│   ├── client/                      # 前端 React 应用
+│   ├── server/                      # 后端 Express + tRPC
+│   ├── drizzle/                     # 数据库 Schema 和迁移
+│   └── shared/                      # 前后端共享类型
 ├── skills/                          # Skills 集合
 │   └── {skill-name}/
 │       ├── SKILL.md                 # Skill 主文件（必需）
