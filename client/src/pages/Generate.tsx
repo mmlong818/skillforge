@@ -6,7 +6,8 @@ import { useParams, useLocation } from "wouter";
 import { useState, useEffect, useMemo } from "react";
 import {
   CheckCircle2, Circle, Loader2, XCircle, FileCode, Download,
-  ChevronDown, ChevronRight, ArrowLeft, Copy, Check, FolderTree
+  ChevronDown, ChevronRight, ArrowLeft, Copy, Check, FolderTree,
+  RefreshCw, AlertTriangle
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
@@ -40,6 +41,7 @@ function CopyButton({ text }: { text: string }) {
 
 function FilePreview({ file }: { file: { path: string; content: string } }) {
   const [expanded, setExpanded] = useState(false);
+  const isSkillMd = file.path === "SKILL.md";
 
   return (
     <div className="border border-border/60 rounded-md overflow-hidden">
@@ -48,8 +50,9 @@ function FilePreview({ file }: { file: { path: string; content: string } }) {
         className="w-full flex items-center justify-between px-3 py-2 bg-muted/30 hover:bg-muted/50 transition-colors"
       >
         <div className="flex items-center gap-1.5">
-          <FileCode className="h-3.5 w-3.5 text-primary" />
+          <FileCode className={`h-3.5 w-3.5 ${isSkillMd ? "text-emerald-500" : "text-primary"}`} />
           <span className="font-mono text-xs font-medium">{file.path}</span>
+          {isSkillMd && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">核心文件</span>}
         </div>
         <div className="flex items-center gap-1">
           <CopyButton text={file.content} />
@@ -57,10 +60,16 @@ function FilePreview({ file }: { file: { path: string; content: string } }) {
         </div>
       </button>
       {expanded && (
-        <div className="max-h-80 overflow-auto bg-muted/10">
-          <pre className="p-3 text-xs font-mono leading-relaxed whitespace-pre-wrap break-words">
-            <code>{file.content}</code>
-          </pre>
+        <div className="max-h-[500px] overflow-auto bg-muted/10">
+          {isSkillMd ? (
+            <div className="p-4 prose prose-sm max-w-none dark:prose-invert text-sm">
+              <Streamdown>{file.content}</Streamdown>
+            </div>
+          ) : (
+            <pre className="p-3 text-xs font-mono leading-relaxed whitespace-pre-wrap break-words">
+              <code>{file.content}</code>
+            </pre>
+          )}
         </div>
       )}
     </div>
@@ -71,6 +80,7 @@ export default function Generate() {
   const params = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const genId = Number(params.id);
+  const utils = trpc.useUtils();
 
   const { data: gen, isLoading } = trpc.skill.getStatus.useQuery(
     { id: genId },
@@ -83,6 +93,16 @@ export default function Generate() {
       },
     }
   );
+
+  const resumeMutation = trpc.skill.resume.useMutation({
+    onSuccess: () => {
+      toast.success("已重新启动生成流程");
+      utils.skill.getStatus.invalidate({ id: genId });
+    },
+    onError: (err) => {
+      toast.error("重试失败: " + err.message);
+    },
+  });
 
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
@@ -102,6 +122,15 @@ export default function Generate() {
     return r?.files || [];
   }, [gen?.result]);
 
+  const isPartial = useMemo(() => {
+    if (!gen?.result) return false;
+    return (gen.result as any)?.partial === true;
+  }, [gen?.result]);
+
+  const hasFailedSteps = useMemo(() => {
+    return gen?.steps?.some((s) => s.status === "failed") || false;
+  }, [gen?.steps]);
+
   const handleDownloadZip = async () => {
     if (!resultFiles.length) return;
     const JSZip = (await import("jszip")).default;
@@ -119,6 +148,10 @@ export default function Generate() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success("下载成功");
+  };
+
+  const handleResume = () => {
+    resumeMutation.mutate({ id: genId });
   };
 
   if (isLoading) {
@@ -160,13 +193,48 @@ export default function Generate() {
             <h1 className="text-xl font-bold">{gen.skillName}</h1>
             <p className="text-xs text-muted-foreground">{gen.domain}</p>
           </div>
-          {gen.status === "completed" && resultFiles.length > 0 && (
-            <Button size="sm" onClick={handleDownloadZip} className="gap-1.5">
-              <Download className="h-3.5 w-3.5" />
-              下载 ZIP
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Resume button for failed or partial generations */}
+            {(gen.status === "failed" || (gen.status === "completed" && hasFailedSteps)) && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResume}
+                disabled={resumeMutation.isPending}
+                className="gap-1.5"
+              >
+                {resumeMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                重试失败步骤
+              </Button>
+            )}
+            {gen.status === "completed" && resultFiles.length > 0 && (
+              <Button size="sm" onClick={handleDownloadZip} className="gap-1.5">
+                <Download className="h-3.5 w-3.5" />
+                下载 ZIP
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* Partial completion warning */}
+        {isPartial && gen.status === "completed" && (
+          <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">部分完成</p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                部分步骤未能成功执行，已从已完成的步骤中组装可用结果。您可以点击"重试失败步骤"来补全缺失的内容。
+              </p>
+              {gen.errorMessage && (
+                <p className="text-xs text-amber-600 mt-1">{gen.errorMessage}</p>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Left: Progress Timeline */}
@@ -179,7 +247,9 @@ export default function Generate() {
                 </CardTitle>
                 <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+                    className={`h-full rounded-full transition-all duration-500 ease-out ${
+                      isPartial ? "bg-amber-500" : "bg-primary"
+                    }`}
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -251,7 +321,7 @@ export default function Generate() {
                       );
                     }
                     return (
-                      <div className="prose prose-sm max-w-none dark:prose-invert text-sm">
+                      <div className="prose prose-sm max-w-none dark:prose-invert text-sm max-h-[600px] overflow-auto">
                         <Streamdown>{step.output || ""}</Streamdown>
                       </div>
                     );
@@ -266,6 +336,9 @@ export default function Generate() {
                   <CardTitle className="text-sm flex items-center gap-1.5">
                     <FolderTree className="h-3.5 w-3.5 text-primary" />
                     生成结果 ({resultFiles.length} 个文件)
+                    {isPartial && (
+                      <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">部分完成</span>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 px-4 pb-4">
@@ -296,7 +369,7 @@ export default function Generate() {
               </Card>
             )}
 
-            {!expandedStep && gen.status !== "completed" && (
+            {!expandedStep && gen.status !== "completed" && gen.status !== "failed" && (
               <Card>
                 <CardContent className="py-8 text-center">
                   <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-3" />

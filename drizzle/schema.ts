@@ -1,4 +1,11 @@
-import { int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, json, mysqlEnum, mysqlTable, text, timestamp, varchar, customType } from "drizzle-orm/mysql-core";
+
+/** Custom mediumtext type for large content (up to 16MB) */
+const mediumtext = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return "mediumtext";
+  },
+});
 
 /**
  * Core user table backing auth flow.
@@ -40,7 +47,7 @@ export const skillGenerations = mysqlTable("skill_generations", {
   currentStep: int("currentStep").default(0).notNull(),
   /** Final assembled result (JSON: { files: [{path, content}] }) */
   result: json("result"),
-  errorMessage: text("errorMessage"),
+  errorMessage: mediumtext("errorMessage"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   completedAt: timestamp("completedAt"),
@@ -57,10 +64,10 @@ export const generationSteps = mysqlTable("generation_steps", {
   stepName: varchar("stepName", { length: 128 }).notNull(),
   status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
   /** LLM output for this step */
-  output: text("output"),
+  output: mediumtext("output"),
   /** Brief summary of the output */
   summary: varchar("summary", { length: 512 }),
-  errorMessage: text("errorMessage"),
+  errorMessage: mediumtext("errorMessage"),
   startedAt: timestamp("startedAt"),
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

@@ -15,6 +15,13 @@
       "when": 1773142859567,
       "tag": "0001_legal_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1773146501065,
+      "tag": "0002_supreme_gabe_jones",
+      "breakpoints": true
     }
   ]
 }
