@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { createGeneration, getGenerationWithSteps, getUserGenerations } from "./db";
-import { runGenerationPipeline, resumeGenerationPipeline, STEPS } from "./skillEngine";
+import { runGenerationPipeline, resumeGenerationPipeline, cancelGeneration, deleteGeneration, STEPS } from "./skillEngine";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -68,14 +68,41 @@ export const appRouter = router({
         if (!gen || gen.userId !== ctx.user.id) {
           throw new Error("Generation not found");
         }
-        if (gen.status !== "failed" && gen.status !== "completed") {
-          throw new Error("Can only resume failed or completed generations");
+        if (gen.status !== "failed" && gen.status !== "completed" && gen.status !== "cancelled") {
+          throw new Error("Can only resume failed, completed, or cancelled generations");
         }
         // Run resume in background
         resumeGenerationPipeline(input.id).catch(err => {
           console.error(`[SkillEngine] Resume failed for generation ${input.id}:`, err);
         });
         return { id: input.id };
+      }),
+
+    /** Cancel a running generation */
+    cancel: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const gen = await getGenerationWithSteps(input.id);
+        if (!gen || gen.userId !== ctx.user.id) {
+          throw new Error("Generation not found");
+        }
+        if (gen.status !== "running" && gen.status !== "pending") {
+          throw new Error("Can only cancel running or pending generations");
+        }
+        await cancelGeneration(input.id);
+        return { success: true };
+      }),
+
+    /** Delete a generation and all its steps */
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const gen = await getGenerationWithSteps(input.id);
+        if (!gen || gen.userId !== ctx.user.id) {
+          throw new Error("Generation not found");
+        }
+        await deleteGeneration(input.id);
+        return { success: true };
       }),
 
     /** Get step definitions */

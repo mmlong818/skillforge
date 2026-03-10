@@ -183,3 +183,80 @@ describe("skill.getStatus", () => {
     expect(status!.steps.length).toBe(7);
   });
 });
+
+describe("skill.cancel", () => {
+  it("requires authentication", async () => {
+    const { ctx } = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.skill.cancel({ id: 1 })).rejects.toThrow();
+  });
+
+  it("rejects cancelling non-existent generation", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.skill.cancel({ id: 999999 })).rejects.toThrow("Generation not found");
+  });
+
+  it("cancels a running generation", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    // Create a generation (it starts running in background)
+    const { id } = await caller.skill.generate({
+      skillName: "cancel-test-skill",
+      domain: "测试",
+      features: "测试功能",
+    });
+
+    // Wait for it to start running
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const result = await caller.skill.cancel({ id });
+    expect(result).toEqual({ success: true });
+
+    // Verify it's cancelled
+    const status = await caller.skill.getStatus({ id });
+    expect(status?.status).toBe("cancelled");
+  });
+});
+
+describe("skill.delete", () => {
+  it("requires authentication", async () => {
+    const { ctx } = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.skill.delete({ id: 1 })).rejects.toThrow();
+  });
+
+  it("rejects deleting non-existent generation", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.skill.delete({ id: 999999 })).rejects.toThrow("Generation not found");
+  });
+
+  it("deletes a generation and its steps", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    // Create a generation
+    const { id } = await caller.skill.generate({
+      skillName: "delete-test-skill",
+      domain: "测试",
+      features: "测试功能",
+    });
+
+    // Wait for background process to create steps
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    // Delete it
+    const result = await caller.skill.delete({ id });
+    expect(result).toEqual({ success: true });
+
+    // Verify it's gone
+    const status = await caller.skill.getStatus({ id });
+    expect(status).toBeNull();
+  });
+});

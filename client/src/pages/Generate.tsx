@@ -7,7 +7,7 @@ import { useState, useEffect, useMemo } from "react";
 import {
   CheckCircle2, Circle, Loader2, XCircle, FileCode, Download,
   ChevronDown, ChevronRight, ArrowLeft, Copy, Check, FolderTree,
-  RefreshCw, AlertTriangle
+  RefreshCw, AlertTriangle, Square, Trash2
 } from "lucide-react";
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
@@ -88,7 +88,7 @@ export default function Generate() {
       refetchInterval: (query) => {
         const d = query.state.data;
         if (!d) return 2000;
-        if (d.status === "completed" || d.status === "failed") return false;
+        if (d.status === "completed" || d.status === "failed" || d.status === "cancelled") return false;
         return 2000;
       },
     }
@@ -103,6 +103,38 @@ export default function Generate() {
       toast.error("重试失败: " + err.message);
     },
   });
+
+  const cancelMutation = trpc.skill.cancel.useMutation({
+    onSuccess: () => {
+      toast.success("已取消生成");
+      utils.skill.getStatus.invalidate({ id: genId });
+    },
+    onError: (err) => {
+      toast.error("取消失败: " + err.message);
+    },
+  });
+
+  const deleteMutation = trpc.skill.delete.useMutation({
+    onSuccess: () => {
+      toast.success("已删除生成记录");
+      navigate("/");
+    },
+    onError: (err) => {
+      toast.error("删除失败: " + err.message);
+    },
+  });
+
+  const handleCancel = () => {
+    if (window.confirm("确定要取消当前生成任务吗？")) {
+      cancelMutation.mutate({ id: genId });
+    }
+  };
+
+  const handleDelete = () => {
+    if (window.confirm("确定要删除此生成记录吗？此操作不可恢复。")) {
+      deleteMutation.mutate({ id: genId });
+    }
+  };
 
   const [expandedStep, setExpandedStep] = useState<number | null>(null);
 
@@ -194,8 +226,25 @@ export default function Generate() {
             <p className="text-xs text-muted-foreground">{gen.domain}</p>
           </div>
           <div className="flex items-center gap-2">
+            {/* Cancel button for running generations */}
+            {(gen.status === "running" || gen.status === "pending") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancel}
+                disabled={cancelMutation.isPending}
+                className="gap-1.5 text-amber-600 border-amber-300 hover:bg-amber-50"
+              >
+                {cancelMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Square className="h-3.5 w-3.5" />
+                )}
+                取消生成
+              </Button>
+            )}
             {/* Resume button for failed or partial generations */}
-            {(gen.status === "failed" || (gen.status === "completed" && hasFailedSteps)) && (
+            {(gen.status === "failed" || gen.status === "cancelled" || (gen.status === "completed" && hasFailedSteps)) && (
               <Button
                 variant="outline"
                 size="sm"
@@ -215,6 +264,23 @@ export default function Generate() {
               <Button size="sm" onClick={handleDownloadZip} className="gap-1.5">
                 <Download className="h-3.5 w-3.5" />
                 下载 ZIP
+              </Button>
+            )}
+            {/* Delete button for all non-running states */}
+            {(gen.status === "completed" || gen.status === "failed" || gen.status === "cancelled") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDelete}
+                disabled={deleteMutation.isPending}
+                className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5"
+              >
+                {deleteMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-3.5 w-3.5" />
+                )}
+                删除
               </Button>
             )}
           </div>
@@ -283,6 +349,13 @@ export default function Generate() {
                   <div className="mt-2 p-2 rounded-md bg-destructive/10 border border-destructive/20">
                     <p className="text-xs text-destructive font-medium">生成失败</p>
                     <p className="text-[11px] text-destructive/80 mt-0.5">{gen.errorMessage}</p>
+                  </div>
+                )}
+
+                {gen.status === "cancelled" && (
+                  <div className="mt-2 p-2 rounded-md bg-amber-50 border border-amber-200">
+                    <p className="text-xs text-amber-700 font-medium">已取消</p>
+                    <p className="text-[11px] text-amber-600 mt-0.5">此生成任务已被用户取消</p>
                   </div>
                 )}
               </CardContent>

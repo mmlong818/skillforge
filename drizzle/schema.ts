@@ -43,7 +43,7 @@ export const skillGenerations = mysqlTable("skill_generations", {
   scenarios: text("scenarios"),
   extraNotes: text("extraNotes"),
   /** Generation status */
-  status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed", "cancelled"]).default("pending").notNull(),
   currentStep: int("currentStep").default(0).notNull(),
   /** Final assembled result (JSON: { files: [{path, content}] }) */
   result: json("result"),

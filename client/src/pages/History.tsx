@@ -6,8 +6,9 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link, useLocation } from "wouter";
 import {
-  CheckCircle2, Loader2, XCircle, Clock, ArrowLeft, Plus, Sparkles
+  CheckCircle2, Loader2, XCircle, Clock, ArrowLeft, Plus, Sparkles, Trash2, Ban
 } from "lucide-react";
+import { toast } from "sonner";
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "completed") {
@@ -31,6 +32,13 @@ function StatusBadge({ status }: { status: string }) {
       </span>
     );
   }
+  if (status === "cancelled") {
+    return (
+      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">
+        <Ban className="h-2.5 w-2.5" /> 已取消
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
       <Clock className="h-2.5 w-2.5" /> 等待中
@@ -42,9 +50,28 @@ export default function History() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
 
+  const utils = trpc.useUtils();
   const { data: generations, isLoading } = trpc.skill.history.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+
+  const deleteMutation = trpc.skill.delete.useMutation({
+    onSuccess: () => {
+      toast.success("已删除生成记录");
+      utils.skill.history.invalidate();
+    },
+    onError: (err) => {
+      toast.error("删除失败: " + err.message);
+    },
+  });
+
+  const handleDelete = (e: React.MouseEvent, id: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.confirm("确定要删除此生成记录吗？此操作不可恢复。")) {
+      deleteMutation.mutate({ id });
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -107,11 +134,20 @@ export default function History() {
                         {gen.domain} · {new Date(gen.createdAt).toLocaleString("zh-CN")}
                       </p>
                     </div>
-                    {gen.status === "running" && (
-                      <span className="text-[11px] text-muted-foreground">
-                        Step {gen.currentStep}/7
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {gen.status === "running" && (
+                        <span className="text-[11px] text-muted-foreground">
+                          Step {gen.currentStep}/7
+                        </span>
+                      )}
+                      <button
+                        onClick={(e) => handleDelete(e, gen.id)}
+                        className="p-1 rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/5 transition-colors"
+                        title="删除"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </CardContent>
                 </Card>
               </Link>

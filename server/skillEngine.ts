@@ -24,6 +24,65 @@ export { STEPS };
 export { isValidSkillMd as _isValidSkillMd, extractSkillMdFromStep5 as _extractSkillMdFromStep5, extractResourceFiles as _extractResourceFiles };
 
 // ─────────────────────────────────────────────
+// Abort Signal Management
+// ─────────────────────────────────────────────
+
+/** In-memory map of generationId → AbortController for running pipelines */
+const runningPipelines = new Map<number, AbortController>();
+
+/** Cancel a running generation pipeline */
+export async function cancelGeneration(generationId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Signal the running pipeline to abort
+  const controller = runningPipelines.get(generationId);
+  if (controller) {
+    controller.abort();
+    runningPipelines.delete(generationId);
+  }
+
+  // Update DB status to cancelled
+  await db.update(skillGenerations)
+    .set({ status: "cancelled", errorMessage: "Cancelled by user" })
+    .where(eq(skillGenerations.id, generationId));
+
+  // Mark any running/pending steps as cancelled
+  const steps = await db.select().from(generationSteps)
+    .where(eq(generationSteps.generationId, generationId));
+  for (const step of steps) {
+    if (step.status === "running" || step.status === "pending") {
+      await db.update(generationSteps)
+        .set({ status: "failed", errorMessage: "Cancelled by user", completedAt: new Date() })
+        .where(eq(generationSteps.id, step.id));
+    }
+  }
+
+  console.log("[SkillEngine] Generation " + generationId + " cancelled by user");
+  return true;
+}
+
+/** Delete a generation and all its steps */
+export async function deleteGeneration(generationId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Cancel if running
+  const controller = runningPipelines.get(generationId);
+  if (controller) {
+    controller.abort();
+    runningPipelines.delete(generationId);
+  }
+
+  // Delete steps first (foreign key dependency)
+  await db.delete(generationSteps).where(eq(generationSteps.generationId, generationId));
+  await db.delete(skillGenerations).where(eq(skillGenerations.id, generationId));
+
+  console.log("[SkillEngine] Generation " + generationId + " deleted");
+  return true;
+}
+
+// ─────────────────────────────────────────────
 // Context Compression
 // ─────────────────────────────────────────────
 
@@ -501,6 +560,10 @@ export async function runGenerationPipeline(generationId: number): Promise<void>
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Register abort controller for this pipeline
+  const abortController = new AbortController();
+  runningPipelines.set(generationId, abortController);
+
   const [gen] = await db.select().from(skillGenerations).where(eq(skillGenerations.id, generationId)).limit(1);
   if (!gen) throw new Error("Generation " + generationId + " not found");
 
@@ -530,6 +593,13 @@ export async function runGenerationPipeline(generationId: number): Promise<void>
   try {
     // Execute Steps 1-7
     for (const step of STEPS) {
+      // Check abort signal before each step
+      if (abortController.signal.aborted) {
+        console.log("[SkillEngine] Generation " + generationId + " aborted before step " + step.number);
+        runningPipelines.delete(generationId);
+        return;
+      }
+
       await db.update(skillGenerations).set({ currentStep: step.number }).where(eq(skillGenerations.id, generationId));
 
       await db.update(generationSteps)
@@ -613,6 +683,8 @@ export async function runGenerationPipeline(generationId: number): Promise<void>
     await db.update(skillGenerations)
       .set({ status: "failed", errorMessage: safeErrorMessage(error) })
       .where(eq(skillGenerations.id, generationId));
+  } finally {
+    runningPipelines.delete(generationId);
   }
 }
 
@@ -623,6 +695,10 @@ export async function runGenerationPipeline(generationId: number): Promise<void>
 export async function resumeGenerationPipeline(generationId: number): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Register abort controller for resume
+  const abortController = new AbortController();
+  runningPipelines.set(generationId, abortController);
 
   const [gen] = await db.select().from(skillGenerations).where(eq(skillGenerations.id, generationId)).limit(1);
   if (!gen) throw new Error("Generation " + generationId + " not found");
@@ -667,6 +743,13 @@ export async function resumeGenerationPipeline(generationId: number): Promise<vo
   try {
     for (const step of STEPS) {
       if (step.number < resumeFromStep) continue;
+
+      // Check abort signal before each step
+      if (abortController.signal.aborted) {
+        console.log("[SkillEngine] Resume generation " + generationId + " aborted before step " + step.number);
+        runningPipelines.delete(generationId);
+        return;
+      }
 
       await db.update(skillGenerations).set({ currentStep: step.number }).where(eq(skillGenerations.id, generationId));
 
@@ -738,5 +821,7 @@ export async function resumeGenerationPipeline(generationId: number): Promise<vo
     await db.update(skillGenerations)
       .set({ status: "failed", errorMessage: safeErrorMessage(error) })
       .where(eq(skillGenerations.id, generationId));
+  } finally {
+    runningPipelines.delete(generationId);
   }
 }
