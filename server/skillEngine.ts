@@ -2,15 +2,10 @@ import { eq, and } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
 import { getDb } from "./db";
 import { skillGenerations, generationSteps } from "../drizzle/schema";
-import { readFileSync } from "fs";
-import { join } from "path";
 
-// Load prompts from JSON file to avoid template literal backtick issues
-const promptsPath = join(import.meta.dirname || __dirname, "prompts.json");
-const PROMPTS: {
-  system: string;
-  steps: Record<string, string>;
-} = JSON.parse(readFileSync(promptsPath, "utf-8"));
+// Import prompts directly so esbuild can inline them into the bundle
+// (readFileSync won't work in production because the JSON file isn't copied to dist/)
+import PROMPTS from "./prompts.json";
 
 /** Step definitions for the 7-step generation pipeline */
 const STEPS = [
@@ -152,7 +147,7 @@ function buildStepPrompt(
 
   const userDescStr = userDesc.join("\n");
 
-  const stepTemplate = PROMPTS.steps[String(stepNumber)] || "";
+  const stepTemplate = (PROMPTS.steps as Record<string, string>)[String(stepNumber)] || "";
   const stepPrompt = stepTemplate.replace(/\{\{SKILL_NAME\}\}/g, userInput.skillName);
 
   if (stepNumber === 1) {
