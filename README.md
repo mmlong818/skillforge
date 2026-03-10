@@ -111,7 +111,7 @@ node dist/index.js
 
 | 提供商 | API URL | 说明 |
 |--------|---------|------|
-| OpenAI | `https://api.openai.com/v1/chat/completions` | 推荐 GPT-4o |
+| OpenAI | `https://api.openai.com/v1/chat/completions` | 推荐 GPT-5.4 |
 | DeepSeek | `https://api.deepseek.com/v1/chat/completions` | 性价比高 |
 | Together AI | `https://api.together.xyz/v1/chat/completions` | 多种开源模型 |
 | 本地部署 | `http://localhost:11434/v1/chat/completions` | Ollama 等 |
