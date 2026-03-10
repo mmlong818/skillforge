@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -25,4 +25,46 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+/** Skill generation tasks */
+export const skillGenerations = mysqlTable("skill_generations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  /** User input fields */
+  skillName: varchar("skillName", { length: 256 }).notNull(),
+  domain: varchar("domain", { length: 256 }).notNull(),
+  features: text("features").notNull(),
+  scenarios: text("scenarios"),
+  extraNotes: text("extraNotes"),
+  /** Generation status */
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
+  currentStep: int("currentStep").default(0).notNull(),
+  /** Final assembled result (JSON: { files: [{path, content}] }) */
+  result: json("result"),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  completedAt: timestamp("completedAt"),
+});
+
+export type SkillGeneration = typeof skillGenerations.$inferSelect;
+export type InsertSkillGeneration = typeof skillGenerations.$inferInsert;
+
+/** Individual step outputs within a generation */
+export const generationSteps = mysqlTable("generation_steps", {
+  id: int("id").autoincrement().primaryKey(),
+  generationId: int("generationId").notNull(),
+  stepNumber: int("stepNumber").notNull(),
+  stepName: varchar("stepName", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["pending", "running", "completed", "failed"]).default("pending").notNull(),
+  /** LLM output for this step */
+  output: text("output"),
+  /** Brief summary of the output */
+  summary: varchar("summary", { length: 512 }),
+  errorMessage: text("errorMessage"),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type GenerationStep = typeof generationSteps.$inferSelect;
+export type InsertGenerationStep = typeof generationSteps.$inferInsert;

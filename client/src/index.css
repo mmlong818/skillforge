@@ -1,6 +1,15 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@font-face {
+  font-family: 'Inter';
+  src: local('Inter');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: local('JetBrains Mono');
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -43,18 +52,20 @@
 }
 
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --primary: oklch(0.55 0.22 270);
+  --primary-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.55 0.22 270);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --chart-1: oklch(0.7 0.15 270);
+  --chart-2: oklch(0.6 0.2 270);
+  --chart-3: oklch(0.55 0.22 270);
+  --chart-4: oklch(0.45 0.2 270);
+  --chart-5: oklch(0.35 0.18 270);
+  --radius: 0.625rem;
+  --background: oklch(0.985 0.002 270);
+  --foreground: oklch(0.2 0.02 270);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.235 0.015 65);
   --popover: oklch(1 0 0);

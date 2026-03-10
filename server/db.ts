@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, skillGenerations, generationSteps, InsertSkillGeneration } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,33 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ---- Skill Generation queries ----
+
+export async function createGeneration(data: InsertSkillGeneration) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [result] = await db.insert(skillGenerations).values(data).$returningId();
+  return result.id;
+}
+
+export async function getGeneration(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [gen] = await db.select().from(skillGenerations).where(eq(skillGenerations.id, id)).limit(1);
+  return gen;
+}
+
+export async function getGenerationWithSteps(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [gen] = await db.select().from(skillGenerations).where(eq(skillGenerations.id, id)).limit(1);
+  if (!gen) return undefined;
+  const steps = await db.select().from(generationSteps).where(eq(generationSteps.generationId, id)).orderBy(generationSteps.stepNumber);
+  return { ...gen, steps };
+}
+
+export async function getUserGenerations(userId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(skillGenerations).where(eq(skillGenerations.userId, userId)).orderBy(desc(skillGenerations.createdAt)).limit(limit);
+}
