@@ -1,8 +1,9 @@
-# SkillForge
+# SkillForge v1.2
 
 **AI Agent Skills 锻造炉** — 用 AI 自动锻造生产级 Agent Skills 的开源工具。
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+![Version](https://img.shields.io/badge/version-1.2-blue.svg)
 
 ---
 
@@ -25,6 +26,7 @@ SkillForge 是一个完整的 Web 应用，内置经过实战验证的 **7 步 A
 | 功能 | 说明 |
 |------|------|
 | 一键生成 | 输入 Skill 名称和描述，自动执行 7 步生成流程 |
+| 修正优化 | 上传已有 Skill，3 步自动诊断并重写为最佳实践版本 |
 | 实时进度 | 每个步骤的执行状态实时展示 |
 | 质量审计 | 10 维度加权评分 + 自动修复低分项 |
 | 完整 Skill 包 | SKILL.md + scripts/ + references/ + templates/ |
@@ -33,7 +35,9 @@ SkillForge 是一个完整的 Web 应用，内置经过实战验证的 **7 步 A
 
 ---
 
-## 7 步生成流程
+## 两大模式
+
+### 创建新 Skill — 7 步生成流程
 
 | 步骤 | 名称 | 核心作用 |
 |------|------|----------|
@@ -44,6 +48,26 @@ SkillForge 是一个完整的 Web 应用，内置经过实战验证的 **7 步 A
 | Step 5 | 质量审计与优化 | 10 维度加权评分 + 自动修复低分项 |
 | Step 6 | 配套资源生成 | 生成 scripts/、references/、templates/ 等配套文件 |
 | Step 7 | 最终组装与交付 | 格式验证 + 内容验证 + 最佳实践验证 |
+
+### 修正已有 Skill — 3 步优化流程 (v1.2 新增)
+
+| 步骤 | 名称 | 核心作用 |
+|------|------|----------|
+| Step 1 | 问题诊断 | 对照最佳实践逐项检查，输出诊断报告和评分 |
+| Step 2 | SKILL.md 重写 | 保留原始意图，按最佳实践重写完整 SKILL.md |
+| Step 3 | 质量审计 | 10 维度评分验证重写质量，确保优于原版 |
+
+支持文本粘贴和 .md 文件上传两种输入方式。
+
+---
+
+## 版本历史
+
+| 版本 | 日期 | 主要变更 |
+|------|------|----------|
+| v1.2 | 2026-03-12 | 新增「修正已有 Skill」功能（3 步优化流程）；重写全部 7 步提示词；修复 SKILL.md 提取逻辑 |
+| v1.1 | 2026-03-11 | 新增任务取消/删除功能；修复部署问题（prompts.json 内联） |
+| v1.0 | 2026-03-10 | 首个版本：7 步生成引擎、实时进度、ZIP 下载、历史记录 |
 
 ---
 
@@ -88,6 +112,7 @@ mysql -u user -p skillforge < drizzle/0000_striped_iron_man.sql
 mysql -u user -p skillforge < drizzle/0001_legal_thor.sql
 mysql -u user -p skillforge < drizzle/0002_supreme_gabe_jones.sql
 mysql -u user -p skillforge < drizzle/0003_wet_vance_astro.sql
+mysql -u user -p skillforge < drizzle/0004_concerned_mattie_franklin.sql
 ```
 
 ### 启动
@@ -126,12 +151,12 @@ SkillForge 提供两种使用方式，适配不同场景：
 
 | 方式 | 目录 | 适合人群 | 产出质量 |
 |------|------|----------|----------|
-| **Web 应用（推荐）** | `webapp/` | 愿意自部署的开发者 | 完整体验：实时进度、任务管理、ZIP 下载、历史记录 |
-| **CC Skill（轻量）** | `skill/` | 不想部署、想直接在 CC 中使用的用户 | 核心流程完整，但缺少任务管理、进度可视化、自动打包等工程化功能 |
+| **Web 应用（推荐）** | `webapp/` | 愿意自部署的开发者 | 完整体验：实时进度、任务管理、ZIP 下载、历史记录、Skill 修正 |
+| **Manus Skill（轻量）** | `skill/` | 不想部署、想直接在 Manus 中使用的用户 | 核心流程完整，但缺少任务管理、进度可视化、自动打包、修正功能等工程化能力 |
 
 ### 方式一：部署 Web 应用
 
-参见下方「快速开始」章节，完整部署后获得最佳体验。
+参见上方「快速开始」章节，完整部署后获得最佳体验。
 
 ### 方式二：直接使用 Manus Skill
 
@@ -143,7 +168,7 @@ SkillForge 提供两种使用方式，适配不同场景：
    - "用 skillforge 创建一个 API 测试自动化的 Skill"
    - "我需要一个数据清洗的 Skill，请用 skillforge 生成"
 
-**注意**：Skill 模式下，7 步流程在单次对话中顺序执行，没有 Web 应用的任务持久化、进度可视化、自动 ZIP 打包等功能。对于偶尔使用或快速原型场景，这种方式足够；对于批量生产或需要迭代管理的场景，建议部署 Web 应用。
+**注意**：Skill 模式下，7 步流程在单次对话中顺序执行，没有 Web 应用的任务持久化、进度可视化、自动 ZIP 打包、Skill 修正等功能。对于偶尔使用或快速原型场景，这种方式足够；对于批量生产或需要迭代管理的场景，建议部署 Web 应用。
 
 ---
 
@@ -154,7 +179,7 @@ skillforge/
 ├── README.md              # 本文件
 ├── LICENSE                # CC BY-NC-SA 4.0 许可证
 ├── CONTRIBUTING.md        # 贡献指南
-├── skill/                 # Skill（轻量版，不需要部署）
+├── skill/                 # Manus Skill（轻量版，不需要部署）
 │   ├── SKILL.md           # Skill 入口文件（7 步流程 + 设计原则）
 │   └── references/
 │       └── step-prompts.md# 7 步完整提示词模板
@@ -166,6 +191,7 @@ skillforge/
     │       └── components/# 可复用 UI 组件
     ├── server/            # 后端 Express + tRPC
     │   ├── skillEngine.ts # 7 步 LLM 生成引擎
+    │   ├── fixEngine.ts   # 3 步 Skill 修正引擎 (v1.2)
     │   ├── prompts.json   # 7 步提示词配置
     │   ├── routers.ts     # API 路由
     │   └── db.ts          # 数据库查询
