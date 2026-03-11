@@ -127,7 +127,7 @@ SkillForge 提供两种使用方式，适配不同场景：
 | 方式 | 目录 | 适合人群 | 产出质量 |
 |------|------|----------|----------|
 | **Web 应用（推荐）** | `webapp/` | 愿意自部署的开发者 | 完整体验：实时进度、任务管理、ZIP 下载、历史记录 |
-| **Manus Skill（轻量）** | `skill/` | 不想部署、直接在 Manus 中使用的用户 | 核心流程完整，但缺少任务管理、进度可视化、自动打包等工程化功能 |
+| **CC Skill（轻量）** | `skill/` | 不想部署、想直接在 CC 中使用的用户 | 核心流程完整，但缺少任务管理、进度可视化、自动打包等工程化功能 |
 
 ### 方式一：部署 Web 应用
 
@@ -135,9 +135,9 @@ SkillForge 提供两种使用方式，适配不同场景：
 
 ### 方式二：直接使用 Manus Skill
 
-如果你不想部署 Web 应用，可以将 `skill/` 目录作为 Manus Skill 直接使用：
+如果你不想部署 Web 应用，可以将 `skill/` 目录作为 Skill 直接使用：
 
-1. 将 `skill/` 目录复制到你的 Manus Skills 目录（通常是 `~/skills/skillforge/`）
+1. 将 `skill/` 目录复制到你的 Skills 目录（通常是 `~/skills/skillforge/`）
 2. 在 Manus 对话中触发，例如：
    - "帮我用 skillforge 生成一个 code-reviewer Skill"
    - "用 skillforge 创建一个 API 测试自动化的 Skill"
@@ -154,7 +154,7 @@ skillforge/
 ├── README.md              # 本文件
 ├── LICENSE                # CC BY-NC-SA 4.0 许可证
 ├── CONTRIBUTING.md        # 贡献指南
-├── skill/                 # Manus Skill（轻量版，不需要部署）
+├── skill/                 # Skill（轻量版，不需要部署）
 │   ├── SKILL.md           # Skill 入口文件（7 步流程 + 设计原则）
 │   └── references/
 │       └── step-prompts.md# 7 步完整提示词模板
