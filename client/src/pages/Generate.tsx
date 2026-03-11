@@ -12,10 +12,11 @@ import {
 import { Streamdown } from "streamdown";
 import { toast } from "sonner";
 
-const STEP_LABELS = [
-  "", "需求深度挖掘", "架构决策引擎", "元数据精炼",
-  "SKILL.md 主体生成", "质量审计与优化", "配套资源生成", "最终组装与交付"
-];
+const STEP_LABELS: Record<string, string[]> = {
+  create: ["", "需求深度挖掘", "架构决策引擎", "元数据精炼",
+    "SKILL.md 主体生成", "质量审计与优化", "配套资源生成", "最终组装与交付"],
+  fix: ["", "问题诊断", "SKILL.md 重写", "质量审计与验证"],
+};
 
 function StepIcon({ status }: { status: string }) {
   if (status === "completed") return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
@@ -145,8 +146,11 @@ export default function Generate() {
     }
   }, [gen?.steps]);
 
+  const mode = (gen as any)?.mode || "create";
+  const labels = STEP_LABELS[mode] || STEP_LABELS.create;
+  const totalSteps = mode === "fix" ? 3 : 7;
   const completedCount = gen?.steps?.filter((s) => s.status === "completed").length || 0;
-  const progress = gen?.steps ? Math.round((completedCount / 7) * 100) : 0;
+  const progress = gen?.steps ? Math.round((completedCount / totalSteps) * 100) : 0;
 
   const resultFiles = useMemo(() => {
     if (!gen?.result) return [];
@@ -334,7 +338,7 @@ export default function Generate() {
                     <StepIcon status={step.status} />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium truncate">
-                        {step.stepNumber}. {STEP_LABELS[step.stepNumber]}
+                        {step.stepNumber}. {labels[step.stepNumber] || `Step ${step.stepNumber}`}
                       </p>
                       {step.summary && (
                         <p className="text-[11px] text-muted-foreground truncate">
@@ -368,7 +372,7 @@ export default function Generate() {
               <Card>
                 <CardHeader className="pb-2 pt-3 px-4">
                   <CardTitle className="text-sm">
-                    Step {expandedStep}: {STEP_LABELS[expandedStep]}
+                    Step {expandedStep}: {labels[expandedStep] || `Step ${expandedStep}`}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4">
