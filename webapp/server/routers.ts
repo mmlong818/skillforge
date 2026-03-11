@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { createGeneration, getGenerationWithSteps, getUserGenerations } from "./db";
 import { runGenerationPipeline, resumeGenerationPipeline, cancelGeneration, deleteGeneration, STEPS } from "./skillEngine";
+import { runFixPipeline, cancelFixPipeline, FIX_STEPS } from "./fixEngine";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -107,6 +108,37 @@ export const appRouter = router({
 
     /** Get step definitions */
     steps: publicProcedure.query(() => STEPS),
+
+    /** Create a fix generation and start the fix pipeline */
+    fix: protectedProcedure
+      .input(z.object({
+        skillName: z.string().min(1).max(256),
+        domain: z.string().min(1).max(256),
+        features: z.string().min(1),
+        scenarios: z.string().optional(),
+        extraNotes: z.string().optional(),
+        originalSkillMd: z.string().min(10),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const genId = await createGeneration({
+          userId: ctx.user.id,
+          mode: "fix",
+          skillName: input.skillName,
+          domain: input.domain,
+          features: input.features,
+          scenarios: input.scenarios || null,
+          extraNotes: input.extraNotes || null,
+          originalSkillMd: input.originalSkillMd,
+        });
+        // Run fix pipeline in background
+        runFixPipeline(genId).catch(err => {
+          console.error(`[FixEngine] Pipeline failed for generation ${genId}:`, err);
+        });
+        return { id: genId };
+      }),
+
+    /** Get fix step definitions */
+    fixSteps: publicProcedure.query(() => FIX_STEPS),
   }),
 });
 

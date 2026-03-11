@@ -36,12 +36,16 @@ export type InsertUser = typeof users.$inferInsert;
 export const skillGenerations = mysqlTable("skill_generations", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  /** Generation mode: create new or fix existing */
+  mode: mysqlEnum("mode", ["create", "fix"]).default("create").notNull(),
   /** User input fields */
   skillName: varchar("skillName", { length: 256 }).notNull(),
   domain: varchar("domain", { length: 256 }).notNull(),
   features: text("features").notNull(),
   scenarios: text("scenarios"),
   extraNotes: text("extraNotes"),
+  /** Original SKILL.md content for fix mode */
+  originalSkillMd: mediumtext("originalSkillMd"),
   /** Generation status */
   status: mysqlEnum("status", ["pending", "running", "completed", "failed", "cancelled"]).default("pending").notNull(),
   currentStep: int("currentStep").default(0).notNull(),

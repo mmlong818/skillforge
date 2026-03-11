@@ -6,7 +6,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link, useLocation } from "wouter";
 import {
-  CheckCircle2, Loader2, XCircle, Clock, ArrowLeft, Plus, Sparkles, Trash2, Ban
+  CheckCircle2, Loader2, XCircle, Clock, ArrowLeft, Plus, Sparkles, Trash2, Ban, Wrench
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -128,6 +128,11 @@ export default function History() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-sm truncate">{gen.skillName}</h3>
+                        {(gen as any).mode === "fix" && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-full">
+                            <Wrench className="h-2.5 w-2.5" /> 修正
+                          </span>
+                        )}
                         <StatusBadge status={gen.status} />
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">
@@ -137,7 +142,7 @@ export default function History() {
                     <div className="flex items-center gap-2 shrink-0">
                       {gen.status === "running" && (
                         <span className="text-[11px] text-muted-foreground">
-                          Step {gen.currentStep}/7
+                          Step {gen.currentStep}/{(gen as any).mode === "fix" ? 3 : 7}
                         </span>
                       )}
                       <button
