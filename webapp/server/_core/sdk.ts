@@ -256,7 +256,30 @@ class SDKServer {
     } as GetUserInfoWithJwtResponse;
   }
 
+  private async getLocalDevUser(): Promise<User> {
+    const signedInAt = new Date();
+    const localOpenId = "local-dev-user";
+
+    await db.upsertUser({
+      openId: localOpenId,
+      name: "Local User",
+      loginMethod: "local",
+      lastSignedIn: signedInAt,
+    });
+
+    const user = await db.getUserByOpenId(localOpenId);
+    if (!user) {
+      throw ForbiddenError("Local development user not found");
+    }
+
+    return user;
+  }
+
   async authenticateRequest(req: Request): Promise<User> {
+    if (ENV.authMode === "local" && !ENV.isProduction) {
+      return this.getLocalDevUser();
+    }
+
     // Regular authentication flow
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = cookies.get(COOKIE_NAME);
