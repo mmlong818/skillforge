@@ -1,0 +1,1 @@
+ALTER TABLE `skill_generations` MODIFY COLUMN `status` enum('pending','running','completed','failed','cancelled') NOT NULL DEFAULT 'pending';

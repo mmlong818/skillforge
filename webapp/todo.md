@@ -1,0 +1,54 @@
+# Project TODO
+
+- [x] Database schema: skill_generations table (store generation tasks + results)
+- [x] Database schema: generation_steps table (store each step's output)
+- [x] System prompts: 7-step LLM prompt chain with context passing
+- [x] Backend: LLM 7-step generation engine with sequential execution
+- [x] Backend: tRPC API - create generation, get status, get result, list history
+- [x] Backend: ZIP packaging for skill download (client-side JSZip)
+- [x] Frontend: Global design (light theme, clean layout, navigation)
+- [x] Frontend: Input form (skill name, domain, features, scenarios)
+- [x] Frontend: Real-time progress display (step status, output summary)
+- [x] Frontend: Result preview (SKILL.md, scripts/, references/, templates/)
+- [x] Frontend: One-click ZIP download
+- [x] Frontend: History list with re-download support
+- [x] Vitest tests for backend API (12 tests passed)
+- [x] UI: Make page layout more compact (reduce padding, margins, spacing)
+- [x] Bug: Fix generation flow not completing - diagnose and fix
+- [x] Ensure generated content is downloadable as ZIP
+- [x] Remove output length limits - prioritize accuracy and completeness over brevity
+- [x] Optimize context passing to support large outputs without truncation
+- [x] Critical Bug: Fix extractSkillMd extracting wrong markdown block (Docker Compose example instead of actual SKILL.md)
+- [x] Improve SKILL.md extraction: validate content contains YAML frontmatter with correct skill name
+- [x] Add PART B section detection as primary extraction strategy
+- [x] Update vitest tests for the improved extraction logic (29 tests passing)
+- [x] Strategy 2 fix: YAML frontmatter in raw text extraction (no code block wrapping)
+- [x] Verified fix against real generation data (generation 30002, 238K chars Step 5 output)
+- [x] Deploy fix: prompts.json not found in dist/ directory - changed readFileSync to import for esbuild inlining
+- [x] Clean up: Delete all existing generation records from database
+- [x] Clean up: Terminate all running background generation tasks (DB records deleted, no active tasks)
+- [x] Feature: Add API to cancel/interrupt a running generation task
+- [x] Feature: Add API to delete a generation record
+- [x] Feature: Add cancel button in UI for running tasks
+- [x] Feature: Add delete button in UI for completed/failed/cancelled tasks (both Generate page and History page)
+- [x] Tests: Write vitest tests for cancel and delete APIs (35 tests all passing)
+- [x] Rewrite prompts.json: Fix system prompt - add global format rules
+- [x] Rewrite prompts.json: Fix Step 1 - add output length guidance (2000-5000 chars)
+- [x] Rewrite prompts.json: Fix Step 2 - align resource planning format with Step 6 (table format)
+- [x] Rewrite prompts.json: Fix Step 3 - strengthen frontmatter format constraints (last code block rule)
+- [x] Rewrite prompts.json: Fix Step 4 - add length limits (150-450 lines) and official best practice alignment
+- [x] Rewrite prompts.json: Fix Step 5 - critical rewrite with PART B iron rules and unique markdown block constraint
+- [x] Rewrite prompts.json: Fix Step 6 - link to Step 2 resource plan, removed placeholder fallback
+- [x] Rewrite prompts.json: Fix Step 7 - structured Markdown output with quoted trigger examples
+- [x] Security audit: scan skill-generator-web code for hardcoded secrets (clean, all via env vars)
+- [x] Open source prep: remove online Web app link from README (replaced with self-deploy guide)
+- [x] Open source prep: add .env.example with all env vars documented
+- [x] Open source prep: export 128 files to skillforge/webapp/ on GitHub
+- [x] Open source prep: update skillforge README with webapp directory and self-deploy instructions
+- [x] Feature: Skill Fix/Optimize mode - users upload existing Skills for analysis and improvement
+- [x] Backend: Design fix prompts (diagnose → rewrite → audit, 3-step pipeline)
+- [x] Backend: Add fix engine logic and pipeline (fixEngine.ts with abort support)
+- [x] Backend: Add API routes for fix flow (skill.fix mutation, reuses getStatus/delete/cancel)
+- [x] Frontend: Add upload UI (Tab switch on Home page, text paste + file upload)
+- [x] Frontend: Fix result display (reuses Generate.tsx with mode-aware step labels)
+- [x] Tests: Write vitest tests for fix flow (45 tests all passing)
