@@ -6,7 +6,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Link, useLocation } from "wouter";
 import {
-  CheckCircle2, Loader2, XCircle, Clock, ArrowLeft, Plus, Sparkles, Trash2, Ban, Wrench
+  CheckCircle2, Loader2, XCircle, Clock, ArrowLeft, Plus, Sparkles, Trash2, Ban, Wrench, RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -65,12 +65,28 @@ export default function History() {
     },
   });
 
+  const regenerateMutation = trpc.skill.quickRegenerate.useMutation({
+    onSuccess: (data) => {
+      toast.success("已创建新的生成任务");
+      navigate(`/generate/${data.id}`);
+    },
+    onError: (err) => {
+      toast.error("重新生成失败: " + err.message);
+    },
+  });
+
   const handleDelete = (e: React.MouseEvent, id: number) => {
     e.preventDefault();
     e.stopPropagation();
     if (window.confirm("确定要删除此生成记录吗？此操作不可恢复。")) {
       deleteMutation.mutate({ id });
     }
+  };
+
+  const handleRegenerate = (e: React.MouseEvent, id: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    regenerateMutation.mutate({ id });
   };
 
   return (
@@ -144,6 +160,20 @@ export default function History() {
                         <span className="text-[11px] text-muted-foreground">
                           Step {gen.currentStep}/{(gen as any).mode === "fix" ? 3 : 7}
                         </span>
+                      )}
+                      {gen.status === "completed" && (
+                        <button
+                          onClick={(e) => handleRegenerate(e, gen.id)}
+                          className="p-1 rounded-md text-muted-foreground/50 hover:text-primary hover:bg-primary/5 transition-colors"
+                          title="用相同参数重新生成"
+                          disabled={regenerateMutation.isPending}
+                        >
+                          {regenerateMutation.isPending ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          )}
+                        </button>
                       )}
                       <button
                         onClick={(e) => handleDelete(e, gen.id)}

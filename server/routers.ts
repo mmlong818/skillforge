@@ -139,6 +139,31 @@ export const appRouter = router({
 
     /** Get fix step definitions */
     fixSteps: publicProcedure.query(() => FIX_STEPS),
+
+    /** Quick regenerate from history - create new generation with same parameters */
+    quickRegenerate: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Get the original generation to extract parameters
+        const originalGen = await getGenerationWithSteps(input.id);
+        if (!originalGen || originalGen.userId !== ctx.user.id) {
+          throw new Error("Original generation not found");
+        }
+        // Create new generation with same parameters
+        const newGenId = await createGeneration({
+          userId: ctx.user.id,
+          skillName: originalGen.skillName,
+          domain: originalGen.domain,
+          features: originalGen.features,
+          scenarios: originalGen.scenarios,
+          extraNotes: originalGen.extraNotes,
+        });
+        // Run pipeline in background
+        runGenerationPipeline(newGenId).catch(err => {
+          console.error(`[SkillEngine] Pipeline failed for generation ${newGenId}:`, err);
+        });
+        return { id: newGenId };
+      }),
   }),
 });
 
