@@ -1,3 +1,7 @@
+# Manus AI platform files
+.manus/
+.manus-logs/
+
 # Dependencies
 **/node_modules
 .pnpm-store/
