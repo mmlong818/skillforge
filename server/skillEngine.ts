@@ -1,5 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
+import { spawnSync } from "child_process";
 import { getDb } from "./db";
 import { skillGenerations, generationSteps } from "../drizzle/schema";
 
@@ -233,11 +234,55 @@ function safeErrorMessage(error: any): string {
   return msg.length > 2000 ? msg.slice(0, 2000) + "... [truncated]" : msg;
 }
 
+function invokeCLI(messages: { role: string; content: string }[]): string {
+  const claudePath = process.env.CLAUDE_CLI_PATH || "claude";
+  const systemMsg = messages.find(m => m.role === "system")?.content || "";
+  const others = messages.filter(m => m.role !== "system");
+  const last = others[others.length - 1];
+  const prior = others.slice(0, -1);
+
+  let prompt = "";
+  if (systemMsg) prompt += `[SYSTEM]:\n${systemMsg}\n\n---\n\n`;
+  if (prior.length > 0) {
+    const ctx = prior.map(m => `[${m.role.toUpperCase()}]:\n${m.content}`).join("\n\n---\n\n");
+    prompt += `${ctx}\n\n---\n\n`;
+  }
+  prompt += last.content;
+
+  const args = ["--print"];
+
+  const result = spawnSync(claudePath, args, {
+    input: prompt,
+    encoding: "utf8",
+    maxBuffer: 50 * 1024 * 1024,
+    timeout: 300000,
+    shell: true,
+  });
+
+  if (result.error) throw result.error;
+  if (result.status !== 0) throw new Error(`Claude CLI failed (exit ${result.status}): ${result.stderr?.slice(0, 500)}`);
+  return result.stdout.trim();
+}
+
 async function invokeLLMWithRetry(
   messages: { role: string; content: string }[],
   maxRetries: number = 5
 ): Promise<string> {
   let lastError: any;
+
+  // Use Claude CLI if configured
+  if (process.env.CLAUDE_CLI === "true") {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return invokeCLI(messages);
+      } catch (error: any) {
+        lastError = error;
+        console.warn("[SkillEngine] Claude CLI attempt " + attempt + "/" + maxRetries + " failed: " + (error.message?.slice(0, 200)));
+        if (attempt < maxRetries) await new Promise(r => setTimeout(r, 3000 * attempt));
+      }
+    }
+    throw lastError;
+  }
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {

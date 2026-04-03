@@ -10,11 +10,12 @@ import { getLoginUrl } from "@/const";
 import { useState, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Sparkles, Zap, FileCode, Download, Shield, ArrowRight, Loader2, Wrench, Upload, FileText, X } from "lucide-react";
+import { toast } from "sonner";
 
 const FEATURES = [
-  { icon: Zap, title: "7 步自动生成", desc: "需求分析到交付，全流程自动化" },
-  { icon: FileCode, title: "完整 Skill 包", desc: "SKILL.md + scripts/ + references/" },
-  { icon: Shield, title: "质量审计内置", desc: "10 维度评分 + 自动修复" },
+  { icon: Zap, title: "4 步自动生成", desc: "需求分析到交付，全流程自动化" },
+  { icon: FileCode, title: "完整 Skill 包", desc: "SKILL.md + 可选配套资源文件" },
+  { icon: Shield, title: "流式实时进度", desc: "每步输出实时可见，过程透明" },
   { icon: Download, title: "一键下载", desc: "ZIP 打包，即装即用" },
 ];
 
@@ -46,11 +47,17 @@ export default function Home() {
     onSuccess: (data) => {
       navigate(`/generate/${data.id}`);
     },
+    onError: (err) => {
+      toast.error(`生成失败: ${err.message}`);
+    },
   });
 
   const fixMutation = trpc.skill.fix.useMutation({
     onSuccess: (data) => {
       navigate(`/generate/${data.id}`);
+    },
+    onError: (err) => {
+      toast.error(`修正失败: ${err.message}`);
     },
   });
 
@@ -144,14 +151,14 @@ export default function Home() {
           <div className="mx-auto max-w-3xl text-center mb-6">
             <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
               <Sparkles className="h-3 w-3" />
-              基于 100+ 优秀 Skills 深度分析
+              严格对齐 Anthropic 官方 Agent Skills 规范
             </div>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
               Perfect Skill
               <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent"> Generator</span>
             </h1>
             <p className="mt-2 text-sm text-muted-foreground max-w-xl mx-auto">
-              输入需求，AI 自动执行 7 步流程，生成符合最佳实践的生产级 Agent Skill 包
+              输入需求，AI 自动执行 4 步流程，生成符合官方最佳实践的生产级 Agent Skill 包
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto">
@@ -209,7 +216,7 @@ export default function Home() {
               <CardHeader className="text-center pb-1 pt-5 px-5">
                 <CardTitle className="text-xl">创建新 Skill</CardTitle>
                 <CardDescription className="text-xs">
-                  描述你想创建的 Agent Skill，系统将自动完成全部 7 个步骤
+                  描述你想创建的 Agent Skill，系统将自动完成全部 4 个步骤
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-5 pb-5">
