@@ -300,6 +300,21 @@ function isValidSkillMd(content: string, skillName: string): boolean {
  * We must validate each candidate block to ensure it's the real SKILL.md.
  */
 function extractSkillMdFromStep5(step5Output: string, step3Output: string, step4Output: string, skillName: string = ""): string {
+  // ── Strategy -1 (highest priority): Find content between %%SKILL_BEGIN%% and %%SKILL_END%% markers ──
+  const BEGIN_MARKER = '%%SKILL_BEGIN%%';
+  const END_MARKER = '%%SKILL_END%%';
+  const beginIdx = step5Output.indexOf(BEGIN_MARKER);
+  const endIdx = step5Output.indexOf(END_MARKER);
+  if (beginIdx !== -1 && endIdx !== -1 && endIdx > beginIdx) {
+    let content = step5Output.slice(beginIdx + BEGIN_MARKER.length, endIdx).trim();
+    const mdMatch = content.match(/^```(?:markdown|md)\n([\s\S]*?)```\s*$/);
+    if (mdMatch) content = mdMatch[1].trim();
+    if (content.length > 100) {
+      console.log("[SkillEngine] Strategy -1: Extracted via %%SKILL_BEGIN%%/%%SKILL_END%% markers (" + content.length + " chars)");
+      return content;
+    }
+  }
+
   // ── Strategy 0 (highest priority): Find PART B section, then extract markdown block within it ──
   const partBPatterns = [
     /##\s*PART\s*B[^\n]*/i,
