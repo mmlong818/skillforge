@@ -156,6 +156,12 @@ class SDKServer {
 
   private getSessionSecret() {
     const secret = ENV.cookieSecret;
+    // Defense in depth: never sign or verify a session with an empty secret.
+    // verifySession() catches this and returns null, so auth fails closed
+    // rather than accepting tokens forged with a known-empty key.
+    if (!secret) {
+      throw new Error("[Security] JWT_SECRET is not configured; refusing to use an empty signing key");
+    }
     return new TextEncoder().encode(secret);
   }
 
