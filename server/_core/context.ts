@@ -23,8 +23,15 @@ const LOCAL_DEV_USER: User = {
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
+  // LOCAL_DEV grants an unauthenticated admin session — only ever honor it
+  // outside production, so a stray LOCAL_DEV=true can never become a backdoor
+  // on a real deployment.
   if (process.env.LOCAL_DEV === "true") {
-    return { req: opts.req, res: opts.res, user: LOCAL_DEV_USER };
+    if (process.env.NODE_ENV === "production") {
+      console.warn("[Security] LOCAL_DEV=true ignored in production; enforcing real authentication.");
+    } else {
+      return { req: opts.req, res: opts.res, user: LOCAL_DEV_USER };
+    }
   }
 
   let user: User | null = null;
