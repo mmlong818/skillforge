@@ -452,6 +452,44 @@ echo "second"
     expect(_extractResourceFiles("no files here")).toHaveLength(0);
   });
 
+  it("does NOT truncate files whose content embeds nested code fences", () => {
+    const output = `### FILE: \`templates/report-formats.md\`
+\`\`\`markdown
+# 输出形态骨架
+
+## 形态 A｜结论先行
+
+\`\`\`
+# <决策问题>
+## 结论
+<一句话答案>
+\`\`\`
+
+## 形态 B｜详细报告
+
+\`\`\`
+# <标题>
+## 摘要
+<概览>
+\`\`\`
+
+末尾说明文字。
+\`\`\`
+
+### FILE: \`scripts/run.py\`
+\`\`\`python
+print("ok")
+\`\`\``;
+
+    const files = _extractResourceFiles(output);
+    expect(files).toHaveLength(2);
+    const tpl = files.find(f => f.path === "templates/report-formats.md")!;
+    expect(tpl.content).toContain("形态 A");
+    expect(tpl.content).toContain("形态 B");
+    expect(tpl.content).toContain("末尾说明文字");
+    expect(files.find(f => f.path === "scripts/run.py")!.content).toContain('print("ok")');
+  });
+
   it("extracts files with **path** format", () => {
     const output = `**scripts/deploy.sh**
 \`\`\`bash

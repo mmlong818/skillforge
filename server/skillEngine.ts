@@ -475,6 +475,31 @@ function extractResourceFiles(step6Output: string): { path: string; content: str
     }
   }
 
+  // Pattern 0 (fence-aware, highest priority): segment the output by FILE headers,
+  // then take each file's content from its first opening fence to the LAST closing
+  // fence in that segment. This correctly handles files whose content embeds its own
+  // ``` code fences (e.g. markdown templates), which the non-greedy patterns below
+  // would truncate at the first inner fence.
+  const headerRe = /^#{1,3}\s*(?:FILE:\s*)?`([^`\n]+\.\w{1,10})`\s*$/gm;
+  const headers: { path: string; headerEnd: number; start: number }[] = [];
+  let hm;
+  while ((hm = headerRe.exec(step6Output)) !== null) {
+    headers.push({ path: hm[1], start: hm.index, headerEnd: headerRe.lastIndex });
+  }
+  for (let i = 0; i < headers.length; i++) {
+    const segStart = headers[i].headerEnd;
+    const segEnd = i + 1 < headers.length ? headers[i + 1].start : step6Output.length;
+    const segment = step6Output.slice(segStart, segEnd);
+    const open = segment.indexOf("```");
+    if (open === -1) continue;
+    const contentStart = segment.indexOf("\n", open);
+    if (contentStart === -1) continue;
+    const close = segment.lastIndexOf("```");
+    if (close <= contentStart) continue;
+    const content = segment.slice(contentStart + 1, close).replace(/\n+$/, "");
+    addFile(headers[i].path, content);
+  }
+
   // Pattern 1: ### FILE: `path` followed by ```...```
   const p1 = /###?\s*FILE:\s*`([^`\n]+)`\s*\n+```[\w]*\n([\s\S]*?)```/g;
   let match;
