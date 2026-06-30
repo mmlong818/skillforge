@@ -1,4 +1,4 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
 import { spawnSync } from "child_process";
 import { getDb } from "./db";
@@ -635,6 +635,49 @@ function assembleResult(
     validation_passed: !partial,
     partial,
   };
+}
+
+// ─────────────────────────────────────────────
+// Startup Recovery
+// ─────────────────────────────────────────────
+
+/**
+ * Reconcile generations orphaned by a server restart/crash.
+ *
+ * A pipeline runs only in the process memory of the server that started it.
+ * When that process dies mid-run (deploy, crash, dev hot-reload), the DB row
+ * stays "running" forever — nothing finishes it, and the resume endpoint
+ * refuses "running" status, so it's an un-recoverable dead end.
+ *
+ * On startup no pipeline is in memory yet, so any "running"/"pending"
+ * generation is by definition orphaned. Mark it (and its unfinished steps)
+ * "failed" with a clear message so the existing Resume flow can pick it up.
+ */
+export async function recoverOrphanedGenerations(): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const orphaned = await db.select().from(skillGenerations)
+    .where(or(eq(skillGenerations.status, "running"), eq(skillGenerations.status, "pending")));
+  if (orphaned.length === 0) return 0;
+
+  for (const gen of orphaned) {
+    const steps = await db.select().from(generationSteps)
+      .where(eq(generationSteps.generationId, gen.id));
+    for (const step of steps) {
+      if (step.status === "running" || step.status === "pending") {
+        await db.update(generationSteps)
+          .set({ status: "failed", errorMessage: "Interrupted by server restart", completedAt: new Date() })
+          .where(eq(generationSteps.id, step.id));
+      }
+    }
+    await db.update(skillGenerations)
+      .set({ status: "failed", errorMessage: "Interrupted by server restart — click Resume to continue." })
+      .where(eq(skillGenerations.id, gen.id));
+  }
+
+  console.log("[SkillEngine] Recovered " + orphaned.length + " orphaned generation(s) on startup");
+  return orphaned.length;
 }
 
 // ─────────────────────────────────────────────
