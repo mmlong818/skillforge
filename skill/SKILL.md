@@ -43,6 +43,7 @@ Analyze the user's requirement. Output a structured document (2000-5000 chars).
 Read the full step prompt: `references/step-prompts.md` → Section "Step 1".
 
 **Output structure:**
+0. **Skill qualification** (decide FIRST): Is this worth a Skill, or better served by a direct answer / doc / script? Build a Skill only when the job recurs AND needs discovery/triggering AND has a clear boundary AND a reusable output contract. If it's a one-off, explanation, translation, or brainstorm → recommend the lighter alternative instead. "Might be useful later" is speculation, not a reason.
 1. Core positioning (name, one-line description, target users, value proposition)
 2. Functional boundaries (core features as input→process→output triples, extensions, exclusions)
 3. Usage scenarios (at least 5, each with: user request, expected behavior, output format)
@@ -70,9 +71,10 @@ Output a complete directory tree at the end.
 
 Generate YAML frontmatter with optimized description.
 
-1. Generate 3 candidate descriptions
-2. Score each on: trigger precision (1-5), capability coverage (1-5), information density (1-5)
-3. Select highest-scoring candidate
+1. **Build trigger test cases FIRST**: should_trigger (5-8), should_not (3-5), near_neighbor (3-5, the ambiguous look-alikes), plus 3-6 negative-pattern keywords. Bilingual, phrased like real users.
+2. Generate 3 candidate descriptions; self-score on trigger precision / capability coverage / information density
+3. **Evaluate each candidate against the test cases** (should_trigger hits, should_not & near_neighbor false-triggers); pick the empirically best candidate — real results outrank self-scores. Tighten the description if a near_neighbor still false-triggers.
+4. Keep the trigger set alongside the frontmatter (optionally persist as `references/trigger-cases.md`) for future regression
 
 Read full prompt: `references/step-prompts.md` → Section "Step 3".
 
@@ -171,8 +173,10 @@ When a user requests Skill generation:
 
 Before delivering the final package, verify:
 
+- [ ] Skill qualification passed (this genuinely warrants a Skill, not a doc/script/direct answer)
 - [ ] SKILL.md exists with valid YAML frontmatter (name + description)
 - [ ] description includes WHAT + WHEN, 30-80 words
+- [ ] description was validated against trigger test cases (should / should-not / near-neighbor)
 - [ ] SKILL.md body < 500 lines
 - [ ] All code examples are complete and runnable
 - [ ] Anti-patterns use ❌/✅ contrast format
