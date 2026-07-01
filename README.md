@@ -1,9 +1,9 @@
-# SkillForge v1.5
+# SkillForge v1.5.1
 
 **AI Agent Skills 锻造炉** — 用 AI 自动锻造生产级 Agent Skills 的开源工具。
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-![Version](https://img.shields.io/badge/version-1.5-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.1-blue.svg)
 
 ---
 
@@ -62,6 +62,7 @@ SkillForge 是一个完整的 Web 应用，内置经过实战验证的 **4 步 A
 
 | 版本 | 日期 | 主要变更 |
 |------|------|----------|
+| v1.5.1 | 2026-07-01 | 安全加固：资源文件提取拒绝绝对路径 / 盘符 / 含 `..` 的路径，防止下载包被 Zip-Slip 写出目标目录（新增回归测试） |
 | v1.5 | 2026-07-01 | 生成流程新增「Skill 资格判定」门（Step 1，先判断该不该做成 Skill）；description 生成升级为触发评测驱动（Step 3 先构造 should / should-not / near-neighbor 触发测试集并实测选优，实测优先于自评分） |
 | v1.4 | 2026-04-03 | 重构为 4 步流程对齐官方规范；标记提取彻底解决 SKILL.md 截断；实时流式进度展示；支持 Claude CLI / Anthropic API 后端 |
 | v1.3 | 2026-04-02 | 修正部分情况下 SKILL.md 不完整；允许历史任务重置 |

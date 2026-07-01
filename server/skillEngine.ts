@@ -468,8 +468,15 @@ function extractResourceFiles(step6Output: string): { path: string; content: str
   const seen = new Set<string>();
 
   function addFile(fpath: string, content: string) {
-    const normalized = fpath.replace(/^\.\//, "").trim();
-    if (normalized && content && normalized !== "SKILL.md" && !seen.has(normalized)) {
+    const trimmed = fpath.trim();
+    const normalized = trimmed.replace(/^\.\//, "");
+    // Reject absolute, drive/UNC, and traversal paths so a malicious FILE header
+    // in LLM output can't become a Zip-Slip entry in the downloaded package.
+    const unsafe =
+      /^[\\/]/.test(trimmed) ||
+      /^[a-zA-Z]:/.test(trimmed) ||
+      normalized.split(/[\\/]/).some(seg => seg === "..");
+    if (normalized && !unsafe && content && normalized !== "SKILL.md" && !seen.has(normalized)) {
       seen.add(normalized);
       files.push({ path: normalized, content: content.trim() });
     }

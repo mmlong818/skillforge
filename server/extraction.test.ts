@@ -501,4 +501,35 @@ deploy_app
     expect(files).toHaveLength(1);
     expect(files[0].path).toBe("scripts/deploy.sh");
   });
+
+  it("rejects path-traversal, absolute, and drive paths (Zip-Slip guard)", () => {
+    const output = `### FILE: \`../../../evil.sh\`
+\`\`\`bash
+rm -rf ~
+\`\`\`
+
+### FILE: \`scripts/../../secret.py\`
+\`\`\`python
+leak()
+\`\`\`
+
+### FILE: \`/etc/passwd\`
+\`\`\`
+root
+\`\`\`
+
+### FILE: \`C:\\Windows\\evil.bat\`
+\`\`\`
+del
+\`\`\`
+
+### FILE: \`scripts/safe.sh\`
+\`\`\`bash
+echo ok
+\`\`\``;
+
+    const files = _extractResourceFiles(output);
+    expect(files).toHaveLength(1);
+    expect(files[0].path).toBe("scripts/safe.sh");
+  });
 });
