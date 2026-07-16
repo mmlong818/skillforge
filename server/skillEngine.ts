@@ -7,6 +7,7 @@ import { skillGenerations, generationSteps } from "../drizzle/schema";
 // Import prompts directly so esbuild can inline them into the bundle
 // (readFileSync won't work in production because the JSON file isn't copied to dist/)
 import PROMPTS from "./prompts.json";
+import { selectExemplars, buildExemplarOutlineBlock, buildExemplarFullBlock } from "./exemplars";
 
 /** Step definitions for the 7-step generation pipeline */
 const STEPS = [
@@ -212,9 +213,20 @@ function buildStepPrompt(
 
   if (stepNumber === 1) {
     return userDescStr + "\n\n" + stepPrompt;
-  } else {
-    return contextBlock + stepPrompt;
   }
+
+  // Inject curated exemplars (from phuryn/pm-skills, MIT) as few-shot references:
+  // Step 2 sees section outlines to inform structure decisions; Step 4 sees full
+  // exemplar SKILL.md files to calibrate style, structure, and information density.
+  if (stepNumber === 2 || stepNumber === 4) {
+    const exemplars = selectExemplars(userInput);
+    const exemplarBlock = stepNumber === 2
+      ? buildExemplarOutlineBlock(exemplars)
+      : buildExemplarFullBlock(exemplars);
+    return contextBlock + exemplarBlock + stepPrompt;
+  }
+
+  return contextBlock + stepPrompt;
 }
 
 // ─────────────────────────────────────────────
