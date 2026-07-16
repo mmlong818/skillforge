@@ -62,3 +62,24 @@ describe("exemplar prompt blocks", () => {
     expect(buildExemplarFullBlock([])).toBe("");
   });
 });
+
+describe("exemplar content hygiene (no pm-skills artifacts leak into prompts)", () => {
+  const inputs = [
+    { skillName: "a", domain: "市场 竞品 数据 文档 评审", features: "分析 校对 访谈 增长 生成 法律 框架" },
+    { skillName: "b", domain: "none", features: "nothing matches" },
+  ];
+
+  it("no $ARGUMENTS placeholder or Further Reading links in any exemplar", () => {
+    for (const input of inputs) {
+      const block = buildExemplarFullBlock(selectExemplars(input, 10));
+      expect(block).not.toContain("$ARGUMENTS");
+      expect(block).not.toContain("Further Reading");
+      expect(block).not.toContain("productcompass.pm");
+    }
+  });
+
+  it("full block states that task requirements override exemplar style", () => {
+    const block = buildExemplarFullBlock(selectExemplars(inputs[0]));
+    expect(block).toContain("以结构要求为准");
+  });
+});
