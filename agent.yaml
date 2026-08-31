@@ -1,0 +1,37 @@
+spec_version: "0.1.0"
+name: skillforge
+version: 1.4.0
+description: >
+  SkillForge is a full-stack web application that generates production-grade
+  AI Agent Skill packages through a structured multi-step pipeline. Given a
+  skill name and description, it performs requirement analysis, architecture
+  decisions, metadata crafting, SKILL.md body generation, quality auditing,
+  resource file creation, and usage documentation — outputting a complete,
+  standards-aligned skill directory ready to install into any GAP-compatible
+  agent. It also repairs existing substandard Skills via a 3-step
+  diagnose-rewrite-audit flow.
+author: mmlong818
+license: CC-BY-NC-SA-4.0
+
+model:
+  preferred: anthropic:claude-sonnet-4-6
+  constraints:
+    temperature: 0.3
+    max_tokens: 8192
+
+skills:
+  - skillforge
+
+runtime:
+  max_turns: 50
+  timeout: 600
+
+compliance:
+  risk_tier: standard
+  supervision:
+    human_in_the_loop: destructive
+    kill_switch: true
+  recordkeeping:
+    audit_logging: true
+  data_governance:
+    pii_handling: none
